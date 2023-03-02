@@ -1,6 +1,6 @@
 import os
 
-projectName = "KYNDRYL-POC-FIDELIDADE"
+projectName = "PRUEBAS2"
 pathWorkspace = "/mnt/h/develop/WorkspaceMF/"
 pathWorkspaceObsidian = "/mnt/h/obsidian/"
 pathCorrelation = '/os390/correlation'
