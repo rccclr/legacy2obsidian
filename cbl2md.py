@@ -1,11 +1,23 @@
 import os
 
-extensionCblPreprocessed = '.CBL_preprocessed'
-pathCorrelation = './os390/correlation'
+projectName = "KYNDRYL-POC-FIDELIDADE"
+pathWorkspace = "/mnt/h/develop/WorkspaceMF/"
+pathWorkspaceObsidian = "/mnt/h/obsidian/"
+pathCorrelation = '/os390/correlation'
 workingStorageId = 'WORKING-STORAGE'
+
+extensionCblPreprocessed = '.CBL_preprocessed'
+extensionMd = '.md'
+
+identificationDivisionId = 'IDENTIFICATION_DIVISION'
 linkageId = 'LINKAGE'
-paragraphSection = '# '
-paragraphLabel   = '## '
+sectionId = 'SECTION'
+programId = 'PROGRAM-ID.'
+
+paragraphSection = '## '
+paragraphLabel   = '### '
+textStart = '~~~text'
+textEnd   = '~~~'
 
 def find_sections(file_path):
     program_name = ''
@@ -19,10 +31,10 @@ def find_sections(file_path):
         for linenum, line in enumerate(f):
             paragraph = ''
             line = line.rstrip()
-            if 'IDENTIFICATION DIVISION' in line:
-                program_name = next(f).split('PROGRAM-ID.')[1].strip()
+            if identificationDivisionId in line:
+                program_name = next(f).split(programId)[1].strip()
                 program_name = program_name.split('.')[0]
-            if 'SECTION.' in line:
+            if sectionId in line:
                 current_section = line[7:].split()[0]
                 if(section_name != ""):
                     sections[section_name] = current_section_lines
@@ -31,37 +43,38 @@ def find_sections(file_path):
                 current_section_lines = []
             linePrint = line[7:72].rstrip()
             if current_section != '' and linePrint!= '':
-                if (line[7:8] !=' ' and 'SECTION.' not in line):
+                if (line[7:8] !=' ' and sectionId not in line):
                     current_section_lines.append("")
                     paragraph = paragraphLabel
                 current_section_lines.append(paragraph + linePrint)
     return sections
 
 def main():
-    for root, dirs, files in os.walk(pathCorrelation):
+    for root, dirs, files in os.walk(pathWorkspace + projectName + pathCorrelation):
         for file in files:
             if file.endswith(extensionCblPreprocessed):
                 file_path = os.path.join(root, file)
                 sections = find_sections(file_path)
                 # SECTIONS
                 for section_name, section_lines in sections.items():
-                    section_file = f"{file_path.replace(extensionCblPreprocessed,'')}_{section_name}.md"
+                    section_file = f"{file_path.replace(pathWorkspace, pathWorkspaceObsidian).replace(extensionCblPreprocessed,'')}_{section_name}{extensionMd}"
                     if(workingStorageId in section_name or linkageId in section_name):
                         section_file = section_file.replace('_','__')
+                    os.makedirs(os.path.dirname(section_file), exist_ok=True)    
                     with open(section_file, 'w') as f:                       
                         for section_line in section_lines:
-                            if section_line.startswith('# '):
+                            if (section_line.startswith(paragraphSection) or section_line.startswith(paragraphLabel)):
+                                if section_line.startswith(paragraphLabel):
+                                    f.write(textEnd)
+                                    f.write("\n")  
                                 f.write(section_line)
                                 f.write("\n")
-                                f.write("~~~text")
+                                f.write(textStart)
                                 f.write("\n")
-                            if section_line.startswith('## '):
-                                f.write("~~~")
+                            else:
                                 f.write(section_line)
                                 f.write("\n")
-                                f.write("~~~text")
-                                f.write("\n")
-                        f.write("~~~")
+                        f.write(textEnd)
 
 if __name__ == '__main__':
     main()
