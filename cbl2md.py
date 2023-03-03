@@ -11,13 +11,16 @@ extensionMd = '.md'
 
 identificationDivisionId = 'IDENTIFICATION_DIVISION'
 linkageId = 'LINKAGE'
-sectionId = 'SECTION'
+sectionId = 'SECTION.'
 programId = 'PROGRAM-ID.'
+gotoInstruction = 'GO TO'
+performInstruction = 'PERFORM'
+performThruInstruction = 'THRU'
+
+textFixed = '```'
 
 paragraphSection = '## '
 paragraphLabel   = '### '
-textStart = '~~~text'
-textEnd   = '~~~'
 
 def find_sections(file_path):
     program_name = ''
@@ -36,9 +39,9 @@ def find_sections(file_path):
                 program_name = program_name.split('.')[0]
             if sectionId in line:
                 current_section = line[7:].split()[0]
+                paragraph = paragraphSection
                 if(section_name != ""):
                     sections[section_name] = current_section_lines
-                    paragraph = paragraphSection
                 section_name = current_section
                 current_section_lines = []
             linePrint = line[7:72].rstrip()
@@ -46,6 +49,16 @@ def find_sections(file_path):
                 if (line[7:8] !=' ' and sectionId not in line):
                     current_section_lines.append("")
                     paragraph = paragraphLabel
+                if paragraph == '':
+                    espacios_iniciales = len(linePrint) - len(linePrint.lstrip())                
+                    if gotoInstruction in linePrint:
+                        linePrint = "&nbsp;" * espacios_iniciales + textFixed + ' '.join(linePrint.lstrip().replace(" ", " ").split()[:2]) + textFixed + "[[" + os.path.basename(file_path).replace(extensionCblPreprocessed,'') +"_" + section_name + extensionMd + "#" + linePrint.lstrip().replace(" ", " ").split()[-1] + "|" + linePrint.lstrip().replace(" ", " ").split()[-1]  + "]]"
+                    elif (performInstruction in linePrint and performThruInstruction not in linePrint):
+                        linePrint = "&nbsp;" * espacios_iniciales + textFixed + ' '.join(linePrint.lstrip().replace(" ", " ").split()[:1]) + textFixed + "[[" + os.path.basename(file_path).replace(extensionCblPreprocessed,'') + "_" + linePrint.lstrip().replace(".", "").split()[-1] + "]]"
+                    elif (performInstruction in linePrint and performThruInstruction in linePrint):
+                        linePrint = "&nbsp;" * espacios_iniciales + textFixed +  linePrint.lstrip().replace(" ", " ") + textFixed
+                    else:    
+                        linePrint = "&nbsp;" * espacios_iniciales + textFixed +  linePrint.lstrip().replace(" ", " ") + textFixed
                 current_section_lines.append(paragraph + linePrint)
     return sections
 
@@ -65,16 +78,13 @@ def main():
                         for section_line in section_lines:
                             if (section_line.startswith(paragraphSection) or section_line.startswith(paragraphLabel)):
                                 if section_line.startswith(paragraphLabel):
-                                    f.write(textEnd)
                                     f.write("\n")  
                                 f.write(section_line)
                                 f.write("\n")
-                                f.write(textStart)
                                 f.write("\n")
                             else:
                                 f.write(section_line)
                                 f.write("\n")
-                        f.write(textEnd)
 
 if __name__ == '__main__':
     main()
