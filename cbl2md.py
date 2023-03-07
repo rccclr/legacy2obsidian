@@ -11,12 +11,19 @@ extensionMd = '.md'
 identificationDivisionId = 'IDENTIFICATION_DIVISION'
 workingStorageId = 'WORKING-STORAGE'
 linkageId = 'LINKAGE'
+configurationId = 'CONFIGURATION'
+
+lisSectionNoProcess = ['WORKING-STORAGE','LINKAGE','CONFIGURATION','FILE']
+
 sectionId = 'SECTION.'
 programId = 'PROGRAM-ID.'
 callInstruction = 'CALL'
 gotoInstruction = 'GO TO'
 performInstruction = 'PERFORM'
 performThruInstruction = 'THRU'
+
+
+lisProgramNoLink = ['ERROR']
 
 patternVarCALLId = 'C-CALLED-MODULE-NAME'
 patternMoveCALLId = 'MOVE'
@@ -52,7 +59,7 @@ def find_sections(file_path):
             if sectionId in line:
                 current_section = line[7:].split()[0]
                 paragraph = paragraphSection
-                if(section_name != ""):
+                if(section_name != "" and section_name not in lisSectionNoProcess):
                     sections[section_name] = current_section_lines
                 section_name = current_section
                 current_section_lines = []
@@ -77,7 +84,10 @@ def find_sections(file_path):
                             patternProgramId = linePrint.lstrip().replace("  ", " ").split(" ")[1].split("-")[2]
                             linePrint = "&nbsp;" * espacios_iniciales + textFixed +  linePrint.lstrip().replace(" ", " ") + textFixed
                     elif (callInstruction in linePrint and patternProgramId != ''):
-                        linePrint = "&nbsp;" * espacios_iniciales + textFixed + ' '.join(linePrint.lstrip().replace(" ", " ").split()[:1]) + textFixed + "[[" + patternProgramId +  "]]"
+                        if(patternProgramId in lisProgramNoLink):
+                            linePrint = "&nbsp;" * espacios_iniciales + textFixed +  linePrint.lstrip().replace(" ", " ") + textFixed
+                        else:
+                            linePrint = "&nbsp;" * espacios_iniciales + textFixed + ' '.join(linePrint.lstrip().replace(" ", " ").split()[:1]) + textFixed + "[[" + patternProgramId +  "]]"
                         patternProgramId = ''
                     else:    
                         linePrint = "&nbsp;" * espacios_iniciales + textFixed +  linePrint.lstrip().replace(" ", " ") + textFixed
@@ -93,7 +103,7 @@ def main():
                 # SECTIONS
                 for section_name, section_lines in sections.items():
                     section_file = f"{file_path.replace(pathWorkspace, pathWorkspaceObsidian).replace(extensionCblPreprocessed,'')}{separatorSection}{section_name}{extensionMd}"
-                    if(workingStorageId in section_name or linkageId in section_name):
+                    if(section_name not in lisSectionNoProcess):
                         section_file = section_file.replace(separatorSection, separatorSectionSpecial)
                     os.makedirs(os.path.dirname(section_file), exist_ok=True)    
                     # PROGRAMS
@@ -101,7 +111,7 @@ def main():
                     with open(program_file, 'w') as p:      
                         p.write(tagCobolProgram + '\n')
                         for section in sections:
-                            if(workingStorageId in section or linkageId in section):
+                            if(section not in lisSectionNoProcess):
                                 p.write("[[" + os.path.basename(file_path).replace(extensionCblPreprocessed,'') + separatorSectionSpecial + section + extensionMd + "]]")
                             else:
                                 p.write("[[" + os.path.basename(file_path).replace(extensionCblPreprocessed,'') + separatorSection + section + extensionMd + "]]")
