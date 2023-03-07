@@ -19,6 +19,9 @@ sectionId = 'SECTION.'
 programId = 'PROGRAM-ID.'
 callInstruction = 'CALL'
 gotoInstruction = 'GO TO'
+cicsExec = 'CICS'
+sqlExec = 'SQL'
+
 performInstruction = 'PERFORM'
 performThruInstruction = 'THRU'
 
@@ -30,6 +33,8 @@ patternMoveCALLId = 'MOVE'
 
 tagCobolProgram = '#CobolProgram'
 tagCobolSection = '#CobolSection'
+tagCobolCics = '#CobolCics'
+tagCobolSql = '#CobolSql'
 
 textFixed = '```'
 
@@ -65,7 +70,7 @@ def find_sections(file_path):
                 current_section_lines = []
             linePrint = line[7:72].rstrip()
             if current_section != '' and linePrint!= '':
-                if (line[7:8] !=' ' and sectionId not in line):
+                if (line[7:8] !=' ' and sectionId not in line and sqlExec not in line):
                     current_section_lines.append("")
                     paragraph = paragraphLabel
                 if paragraph == '':
@@ -101,11 +106,11 @@ def main():
                 file_path = os.path.join(root, file)
                 sections = find_sections(file_path)
                 # SECTIONS
+                section_file = ""
                 for section_name, section_lines in sections.items():
-                    section_file = f"{file_path.replace(pathWorkspace, pathWorkspaceObsidian).replace(extensionCblPreprocessed,'')}{separatorSection}{section_name}{extensionMd}"
                     if(section_name not in lisSectionNoProcess):
-                        section_file = section_file.replace(separatorSection, separatorSectionSpecial)
-                    os.makedirs(os.path.dirname(section_file), exist_ok=True)    
+                        section_file = f"{file_path.replace(pathWorkspace, pathWorkspaceObsidian).replace(extensionCblPreprocessed,'')}{separatorSection}{section_name}{extensionMd}"
+                        os.makedirs(os.path.dirname(section_file), exist_ok=True)    
                     # PROGRAMS
                     program_file = file_path.replace(pathWorkspace, pathWorkspaceObsidian).replace(extensionCblPreprocessed,'') + extensionMd
                     with open(program_file, 'w') as p:      
@@ -127,6 +132,12 @@ def main():
                                 f.write("\n")
                                 f.write("\n")
                             else:
+                                if(cicsExec in section_line):
+                                    f.write("![[CICS.png]]")
+                                    f.write("\n")
+                                if(sqlExec in section_line):
+                                    f.write("![[SQL.png]]")
+                                    f.write("\n")                                    
                                 f.write(section_line)
                                 f.write("\n")
 
